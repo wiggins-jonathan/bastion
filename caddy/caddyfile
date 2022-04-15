@@ -1,0 +1,54 @@
+{
+  email {$EMAIL}
+  log
+
+  # Avoid rate-limiting by let's encrypt. Use for testing
+  #acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
+}
+
+(tls) {
+  tls {
+    dns cloudflare {$CLOUDFLARE_API_TOKEN}
+  }
+}
+
+(globals) {
+  header / {
+    # Enable HTTP Strict Transport Security (HSTS)
+    Strict-Transport-Security "max-age=31536000;"
+
+    # Enable cross-site filter (XSS) and tell browser to block detected attacks
+    X-XSS-Protection "1; mode=block"
+
+    # Disallow the site to be rendered within a frame (clickjacking protection)
+    X-Frame-Options "DENY"
+
+    -Server                               # Server name removing
+    X-Robots-Tag "none"                   # Prevent search engines from indexing
+    Permissions-Policy interest-cohort=() # Disable FLoC tracking
+  }
+}
+
+{$DOMAIN} {
+  import tls
+  import globals
+  respond "hello world"
+}
+
+www.{$DOMAIN} {
+  redir https://{$DOMAIN}{uri}
+}
+
+vaultwarden.{$DOMAIN} {
+  import tls
+  import globals
+  reverse_proxy /notifications/hub/negotiate  vaultwarden:80
+  reverse_proxy /notifications/hub            vaultwarden:3012  # websockets
+
+  # Send the true ip (not container ip). This is used for fail2ban
+  reverse_proxy vaultwarden:80 { header_up X-Real-IP {remote_host} }
+}
+
+vw.{$DOMAIN} {
+  redir https://vaultwarden.{$DOMAIN}{$uri}
+}

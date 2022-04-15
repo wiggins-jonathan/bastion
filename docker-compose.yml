@@ -1,0 +1,61 @@
+---
+version: '3.3'
+services:
+  caddy:
+    container_name: caddy
+    build: .
+    ports:
+      - "80:80"
+      - "443:443"
+    hostname: caddy
+    environment:
+      DOMAIN: ${DOMAIN}
+      EMAIL: ${EMAIL}
+      CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN}
+    volumes:
+      - ./caddy/caddyfile:/etc/caddy/Caddyfile:ro
+      - ./caddy/data:/data
+      - ./caddy/config:/config
+    restart: unless-stopped
+
+  vaultwarden:
+    image: vaultwarden/server:1.24.0-alpine
+    container_name: vaultwarden
+    depends_on: [caddy]
+    environment:
+      WEBSOCKET_ENABLED : 'true'
+      SIGNUPS_ALLOWED   : 'false'
+    volumes:
+      - ${HOME}/webservices/vaultwarden:/data
+    restart: unless-stopped
+
+  fail2ban:
+    image: crazymax/fail2ban:0.11.1
+    container_name: fail2ban
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    volumes:
+      - ${HOME}/webservices/fail2ban/data:/data
+      - /var/log:/var/log:ro
+    restart: unless-stopped
+
+  wireguard:
+    image: linuxserver/wireguard:1.0.20210914
+    container_name: wireguard
+    ports: ["51820:51820/udp"]
+    environment:
+      PEERS: rpi01,pixel4a
+      PUID: ${PUID}
+      PGID: ${PGID}
+      TZ  : ${TZ}
+    volumes:
+      - ./wireguard:/config
+      - /lib/modules:/lib/modules
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    sysctls:
+      net.ipv4.conf.all.src_valid_mark: 1
+    restart: unless-stopped
