@@ -26,7 +26,7 @@ services:
       WEBSOCKET_ENABLED : 'true'
       SIGNUPS_ALLOWED   : 'false'
     volumes:
-      - ${HOME}/webservices/vaultwarden:/data
+      - ${HOME}/bastion/vaultwarden:/data
     restart: unless-stopped
 
   fail2ban:
@@ -37,7 +37,7 @@ services:
       - NET_ADMIN
       - NET_RAW
     volumes:
-      - ${HOME}/webservices/fail2ban/data:/data
+      - ${HOME}/bastion/fail2ban/data:/data
       - /var/log:/var/log:ro
     restart: unless-stopped
 
@@ -51,7 +51,7 @@ services:
       PGID: ${PGID}
       TZ  : ${TZ}
     volumes:
-      - ./wireguard:/config
+      - ${HOME}/bastion/wireguard:/config
       - /lib/modules:/lib/modules
     cap_add:
       - NET_ADMIN
