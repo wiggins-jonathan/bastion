@@ -1,7 +1,13 @@
----
-version: '3.3'
+x-globals: &globals
+  environment:
+    TZ: ${TZ}
+    PUID: ${PUID}
+    PGID: ${PGID}
+  restart: unless-stopped
+
 services:
   wireguard:
+    <<: *globals
     image: linuxserver/wireguard:1.0.20210914
     container_name: wireguard
     ports:
@@ -10,22 +16,19 @@ services:
       - "80:80"
       - "443:443"
     environment:
-      PEERS           : ${PEERS}
       INTERNAL_SUBNET : 10.10.10.0
-      PUID            : ${PUID}
-      PGID            : ${PGID}
-      TZ              : ${TZ}
+      PEERS           : rpi01,pixel4a
     volumes:
-      - ${HOME}/bastion/wireguard:/config
+      - ./wireguard:/config
       - /lib/modules:/lib/modules
     cap_add:
       - NET_ADMIN
       - SYS_MODULE
     sysctls:
       net.ipv4.conf.all.src_valid_mark: 1
-    restart: unless-stopped
 
   caddy:
+    <<: *globals
     container_name: caddy
     depends_on: [wireguard]
     network_mode: service:wireguard # Share wireguard VPN network
@@ -35,19 +38,39 @@ services:
       EMAIL: ${EMAIL}
       CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN}
     volumes:
-      - ${HOME}/bastion/caddy/caddyfile:/etc/caddy/Caddyfile:ro
-      - ${HOME}/bastion/caddy/data:/data
-      - ${HOME}/bastion/caddy/config:/config
-    restart: unless-stopped
+      - ./caddy/caddyfile:/etc/caddy/Caddyfile:ro
+      - ./caddy/data:/data
+      - ./caddy/config:/config
 
   fail2ban:
-    image: crazymax/fail2ban:0.11.1
+    <<: *globals
+    image: crazymax/fail2ban:0.11.2
     container_name: fail2ban
     network_mode: host
     cap_add:
       - NET_ADMIN
       - NET_RAW
     volumes:
-      - ${HOME}/bastion/fail2ban/data:/data
+      - ./fail2ban/data:/data
       - /var/log:/var/log:ro
-    restart: unless-stopped
+
+  vaultwarden:
+    <<: *globals
+    image: vaultwarden/server:1.25.2-alpine
+    container_name: vaultwarden
+    environment:
+      WEBSOCKET_ENABLED : 'true'
+      SIGNUPS_ALLOWED   : 'false'
+    volumes:
+      - ./vaultwarden:/data
+
+  ssh-chat:
+    <<: *globals
+    image: byreqz/ssh-chat:latest
+    container_name: ssh-chat
+    ports:
+      - "2022:2022"
+    volumes:
+      - ./ssh-chat/ssh-chat-key:/ssh_key
+      - ./ssh-chat/admin_keys:/admin_keys:ro
+      - ./ssh-chat/motd:/motd
