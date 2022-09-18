@@ -1,13 +1,13 @@
-x-globals: &globals
-  environment:
-    TZ: ${TZ}
-    PUID: ${PUID}
-    PGID: ${PGID}
+x-env: &env
+  TZ: ${TZ}
+  PUID: ${PUID}
+  PGID: ${PGID}
+
+x-restart: &restart
   restart: unless-stopped
 
 services:
   wireguard:
-    <<: *globals
     image: linuxserver/wireguard:1.0.20210914
     container_name: wireguard
     ports:
@@ -16,8 +16,9 @@ services:
       - "80:80"
       - "443:443"
     environment:
-      INTERNAL_SUBNET : 10.10.10.0
-      PEERS           : rpi01,pixel4a
+      INTERNAL_SUBNET: 10.10.10.0
+      PEERS: rpi01,pixel4a
+      <<: *env
     volumes:
       - ./wireguard:/config
       - /lib/modules:/lib/modules
@@ -26,51 +27,58 @@ services:
       - SYS_MODULE
     sysctls:
       net.ipv4.conf.all.src_valid_mark: 1
+    <<: *restart
 
   caddy:
-    <<: *globals
+    build: .
     container_name: caddy
     depends_on: [wireguard]
     network_mode: service:wireguard # Share wireguard VPN network
-    build: .
     environment:
       DOMAIN: ${DOMAIN}
       EMAIL: ${EMAIL}
       CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN}
+      <<: *env
     volumes:
       - ./caddy/caddyfile:/etc/caddy/Caddyfile:ro
       - ./caddy/data:/data
       - ./caddy/config:/config
+    <<: *restart
 
   fail2ban:
-    <<: *globals
     image: crazymax/fail2ban:0.11.2
     container_name: fail2ban
     network_mode: host
     cap_add:
       - NET_ADMIN
       - NET_RAW
+    environment:
+      <<: *env
     volumes:
       - ./fail2ban/data:/data
       - /var/log:/var/log:ro
+    <<: *restart
 
   vaultwarden:
-    <<: *globals
     image: vaultwarden/server:1.25.2-alpine
     container_name: vaultwarden
     environment:
-      WEBSOCKET_ENABLED : 'true'
-      SIGNUPS_ALLOWED   : 'false'
+      WEBSOCKET_ENABLED:    'true'
+      SIGNUPS_ALLOWED:      'false'
+      <<: *env
     volumes:
       - ./vaultwarden:/data
+    <<: *restart
 
   ssh-chat:
-    <<: *globals
     image: byreqz/ssh-chat:latest
     container_name: ssh-chat
     ports:
       - "2022:2022"
+    environment:
+      <<: *env
     volumes:
       - ./ssh-chat/ssh-chat-key:/ssh_key
       - ./ssh-chat/admin_keys:/admin_keys:ro
       - ./ssh-chat/motd:/motd
+    <<: *restart
