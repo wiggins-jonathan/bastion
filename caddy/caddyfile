@@ -29,26 +29,25 @@
   }
 }
 
-{$DOMAIN} {
+*.{$DOMAIN}, {$DOMAIN} {
   import tls
   import globals
-  respond "hello world"
-}
 
-www.{$DOMAIN} {
-  redir https://{$DOMAIN}{uri}
-}
+  @www host www.{$DOMAIN}
+  handle @www {
+    redir https://{$DOMAIN}{uri}
+  }
 
-vaultwarden.{$DOMAIN} {
-  import tls
-  import globals
-  reverse_proxy /notifications/hub/negotiate  vaultwarden:80
-  reverse_proxy /notifications/hub            vaultwarden:3012  # websockets
+  @health host health.{$DOMAIN}
+  handle @health {
+    respond 200
+  }
 
-  # Send the true ip (not container ip). This is used for fail2ban
-  reverse_proxy vaultwarden:80 { header_up X-Real-IP {remote_host} }
-}
+  @vaultwarden host vaultwarden.{$DOMAIN}
+  handle @vaultwarden {
+    reverse_proxy /notifications/hub vaultwarden:3012  # websockets
+    reverse_proxy vaultwarden:80
+  }
 
-vw.{$DOMAIN} {
-  redir https://vaultwarden.{$DOMAIN}{$uri}
+  reverse_proxy 10.10.10.2:80
 }
