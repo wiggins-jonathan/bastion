@@ -23,6 +23,7 @@
     # Disallow the site to be rendered within a frame (clickjacking protection)
     X-Frame-Options "DENY"
 
+    encode gzip                           # zips responses if not already
     -Server                               # Server name removing
     X-Robots-Tag "none"                   # Prevent search engines from indexing
     Permissions-Policy interest-cohort=() # Disable FLoC tracking
