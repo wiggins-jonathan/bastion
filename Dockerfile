@@ -1,6 +1,5 @@
-# Dockerfile to build custom caddy container with dns
-ARG CADDY_VERSION=2.4.6
-FROM caddy:${CADDY_VERSION}-builder AS builder
+ARG CADDY_VERSION=2.5.2
+FROM caddy:${CADDY_VERSION}-builder-alpine AS builder
 
 RUN xcaddy build \
   --with github.com/caddy-dns/cloudflare
