@@ -60,17 +60,6 @@ services:
       - /var/log:/var/log:ro
     <<: *restart
 
-  vaultwarden:
-    image: vaultwarden/server:1.25.2-alpine
-    container_name: vaultwarden
-    environment:
-      WEBSOCKET_ENABLED:    'true'
-      SIGNUPS_ALLOWED:      'false'
-      <<: *env
-    volumes:
-      - ./vaultwarden:/data
-    <<: *restart
-
   ssh-chat:
     image: byreqz/ssh-chat:latest
     container_name: ssh-chat
