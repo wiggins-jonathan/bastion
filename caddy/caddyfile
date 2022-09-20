@@ -30,6 +30,13 @@
   }
 }
 
+(auth) {
+  forward_auth 10.10.10.2:1000 {
+    uri /api/verify?rd=https://auth.{$DOMAIN}
+    copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
+  }
+}
+
 *.{$DOMAIN}, {$DOMAIN} {
   import tls
   import globals
@@ -39,16 +46,39 @@
     redir https://{$DOMAIN}{uri}
   }
 
-  @health host health.{$DOMAIN}
-  handle @health {
-    respond 200
+  @auth host auth.{$DOMAIN}
+  handle @auth {
+    reverse_proxy 10.10.10.2:1000
+  }
+
+  @domain host {$DOMAIN}
+  handle @domain {
+    respond "hello world"
+  }
+
+  @music host music.{$DOMAIN}
+  handle @music {
+    import auth
+    reverse_proxy 10.10.10.2:4533
   }
 
   @vaultwarden host vaultwarden.{$DOMAIN}
   handle @vaultwarden {
-    reverse_proxy /notifications/hub vaultwarden:3012  # websockets
-    reverse_proxy vaultwarden:80
+    reverse_proxy /notifications/hub 10.10.10.2:3012  # websockets
+    reverse_proxy 10.10.10.2:8081                     # webui
   }
 
-  reverse_proxy 10.10.10.2:80
+  @torrents host torrents.{$DOMAIN}
+  handle @torrents {
+    import auth
+    reverse_proxy 10.10.10.2:9091
+  }
+
+  @uptime host uptime.{$DOMAIN}
+  handle @uptime {
+    import auth
+    reverse_proxy 10.10.10.2:3001
+  }
+
+  respond "404: Not Found" 404
 }
