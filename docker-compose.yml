@@ -15,6 +15,7 @@ services:
       # For caddy
       - "80:80"
       - "443:443"
+      - "1000:1000"   # for authelia to connect to lldap
     environment:
       INTERNAL_SUBNET: 10.10.10.0
       PEERS: rpi01,pixel4a
