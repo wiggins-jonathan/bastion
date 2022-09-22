@@ -80,5 +80,17 @@
     reverse_proxy 10.10.10.2:3001
   }
 
+  @ntfy host ntfy.{$DOMAIN}
+  handle @ntfy {
+    import auth
+    reverse_proxy 10.10.10.2:8082
+  }
+
+  @files host files.{$DOMAIN}
+  handle @files {
+    import auth
+    reverse_proxy 10.10.10.2:1100
+  }
+
   respond "404: Not Found" 404
 }
