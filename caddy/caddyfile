@@ -92,5 +92,10 @@
     reverse_proxy 10.10.10.2:1100
   }
 
+  @search host search.{$DOMAIN}
+  handle @search {
+    reverse_proxy 10.10.10.2:1300
+  }
+
   respond "404: Not Found" 404
 }
