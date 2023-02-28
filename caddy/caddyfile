@@ -97,5 +97,10 @@
     reverse_proxy 10.10.10.2:1300
   }
 
+  @read host read.{$DOMAIN}
+  handle @read {
+    reverse_proxy 10.10.10.2:1400
+  }
+
   respond "404: Not Found" 404
 }
