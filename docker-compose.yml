@@ -1,6 +1,6 @@
 x-env: &env
-  PUID: ${PUID}
-  PGID: ${PGID}
+  PUID: 2000
+  PGID: 2000
   TZ: ${TZ}
 
 x-restart: &restart
@@ -57,17 +57,4 @@ services:
     volumes:
       - ./fail2ban/data:/data
       - /var/log:/var/log:ro
-    <<: *restart
-
-  ssh-chat:
-    image: byreqz/ssh-chat:latest
-    container_name: ssh-chat
-    ports:
-      - "2022:2022"
-    environment:
-      <<: *env
-    volumes:
-      - ./ssh-chat/ssh-chat-key:/ssh_key
-      - ./ssh-chat/admin_keys:/admin_keys:ro
-      - ./ssh-chat/motd:/motd
     <<: *restart
