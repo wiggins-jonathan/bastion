@@ -40,11 +40,12 @@ resource "oci_core_subnet" "subnet" {
 }
 
 resource "oci_core_instance" "vm_instance" {
-  count        = 2
+  count        = 3
   display_name = format("oracle%02d", count.index + 1)
 
-  availability_domain = "TMcl:PHX-AD-2"          # always free domain
-  shape               = "VM.Standard.E2.1.Micro" # always free shape
+  # Create 2 free x86 VMs & 1 free Arm VM
+  shape = count.index == 2 ? "VM.Standard.A1.Flex" : "VM.Standard.E2.1.Micro"
+  availability_domain = "TMcl:PHX-AD-2"
   compartment_id      = oci_identity_compartment.compartment.id
 
   metadata = {
