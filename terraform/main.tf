@@ -29,7 +29,7 @@ resource "oci_identity_compartment" "compartment" {
 resource "oci_core_virtual_network" "vcn" {
   compartment_id = oci_identity_compartment.compartment.id
   cidr_block     = "10.0.0.0/16"
-  display_name   = "vcn-20210515-1507"
+  display_name   = "vcn01"
 }
 
 resource "oci_core_subnet" "subnet" {
@@ -44,7 +44,7 @@ resource "oci_core_instance" "vm_instance" {
   display_name = format("oracle%02d", count.index + 1)
 
   # Create 2 free x86 VMs & 1 free Arm VM
-  shape = count.index == 2 ? "VM.Standard.A1.Flex" : "VM.Standard.E2.1.Micro"
+  shape               = count.index == 2 ? "VM.Standard.A1.Flex" : "VM.Standard.E2.1.Micro"
   availability_domain = "TMcl:PHX-AD-2"
   compartment_id      = oci_identity_compartment.compartment.id
 
