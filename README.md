@@ -1,9 +1,9 @@
 # Bastion
-A VPS bastion server forwarding traffic to an internal network via wireguard.
+A VPS bastion server forwarding traffic to an internal network via headscale.
 
 ## Services
-- [wireguard](https://www.wireguard.com/)
-  * A VPN server.
+- [headscale](https://github.com/juanfont/headscale)
+  * A mesh VPN server.
 - [caddy](https://caddyserver.com/)
   * A reverse proxy built with DNS challenge through cloudflare.
 - [fail2ban](https://www.fail2ban.org)

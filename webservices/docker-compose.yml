@@ -1,49 +1,50 @@
-x-env: &env
-  PUID: 2000
-  PGID: 2000
-  TZ: ${TZ}
-
-x-restart: &restart
-  restart: unless-stopped
-
 services:
-  wireguard:
-    image: linuxserver/wireguard:1.0.20210914
-    container_name: wireguard
+  headscale:
+    image: headscale/headscale:0.22.3
+    container_name: headscale
+    command: headscale serve
     ports:
-      - "51820:51820/udp"
-      # For caddy
+      - "8080:8080"
+      - "9090:9090"
+    volumes:
+      - ./headscale/config:/etc/headscale
+      - ./headscale/data:/var/lib/headscale
+    restart: unless-stopped
+
+  tailscale:
+    image: tailscale/tailscale:v1.54.0
+    container_name: tailscale
+    hostname: oracle02
+    command: tailscaled
+    depends_on: [headscale]
+    privileged: 'true'
+    cap_add:
+      - net_admin
+      - sys_module
+    ports:  # for caddy
       - "80:80"
       - "443:443"
-    environment:
-      INTERNAL_SUBNET: 10.10.10.0
-      PEERS: rpi01,pixel4a
-      <<: *env
     volumes:
-      - ./wireguard:/config
-      - /lib/modules:/lib/modules
-    cap_add:
-      - NET_ADMIN
-      - SYS_MODULE
-    sysctls:
-      net.ipv4.conf.all.src_valid_mark: 1
-    <<: *restart
+      - ./tailscale:/var/lib
+      - /dev/net/tun:/dev/net/tun
+    restart: unless-stopped
 
   caddy:
-    build: .
     container_name: caddy
-    depends_on: [wireguard]
-    network_mode: service:wireguard # Share wireguard VPN network
+    build: .
+    depends_on:
+      - headscale
+      - tailscale
+    network_mode: service:tailscale # connect to VPN
     environment:
       DOMAIN: ${DOMAIN}
       EMAIL: ${EMAIL}
       CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN}
-      <<: *env
     volumes:
       - ./caddy/caddyfile:/etc/caddy/Caddyfile:ro
       - ./caddy/data:/data
       - ./caddy/config:/config
-    <<: *restart
+    restart: unless-stopped
 
   fail2ban:
     image: crazymax/fail2ban:0.11.2
@@ -52,9 +53,7 @@ services:
     cap_add:
       - NET_ADMIN
       - NET_RAW
-    environment:
-      <<: *env
     volumes:
-      - ./fail2ban/data:/data
+      - ${HOME}/bastion/fail2ban/data:/data
       - /var/log:/var/log:ro
-    <<: *restart
+    restart: unless-stopped
