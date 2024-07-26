@@ -1,6 +1,10 @@
 {
   email {$EMAIL}
-  log
+  log {
+    format console {
+      time_format wall_milli  # 2006/01/02 15:04:05.000
+    }
+  }
 
   # Avoid rate-limiting by let's encrypt. Use for testing
   #acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
