@@ -35,7 +35,7 @@
 }
 
 (auth) {
-  forward_auth 10.10.10.2:1000 {
+  forward_auth nas:1000 {
     uri /api/verify?rd=https://auth.{$DOMAIN}
     copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
   }
@@ -50,44 +50,35 @@
     redir https://{$DOMAIN}{uri}
   }
 
-  @auth host auth.{$DOMAIN}
-  handle @auth {
-    reverse_proxy 10.10.10.2:1000
-  }
-
   @domain host {$DOMAIN}
   handle @domain {
-    respond "hello world"
+    respond "ah ah ah, you didn't say the magic word"
+  }
+
+  @auth host auth.{$DOMAIN}
+  handle @auth {
+    reverse_proxy nas:1000
+  }
+
+  @vaultwarden host vaultwarden.{$DOMAIN}
+  handle @vaultwarden {
+    reverse_proxy nas:8080
+  }
+
+  @watch host watch.{$DOMAIN}
+  handle @watch {
+    reverse_proxy nucbox:8096
   }
 
   @music host music.{$DOMAIN}
   handle @music {
     import auth
-    reverse_proxy 10.10.10.2:4533
+    reverse_proxy nucbox:4533
   }
 
-  @vaultwarden host vaultwarden.{$DOMAIN}
-  handle @vaultwarden {
-    reverse_proxy /notifications/hub 10.10.10.2:3012  # websockets
-    reverse_proxy 10.10.10.2:8081                     # webui
-  }
-
-  @torrents host torrents.{$DOMAIN}
-  handle @torrents {
-    import auth
-    reverse_proxy 10.10.10.2:9091
-  }
-
-  @uptime host uptime.{$DOMAIN}
-  handle @uptime {
-    import auth
-    reverse_proxy 10.10.10.2:3001
-  }
-
-  @ntfy host ntfy.{$DOMAIN}
-  handle @ntfy {
-    import auth
-    reverse_proxy 10.10.10.2:8082
+  @photos host photos.{$DOMAIN}
+  handle @photos {
+    reverse_proxy nucbox:2283
   }
 
   respond "404: Not Found" 404
