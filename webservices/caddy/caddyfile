@@ -34,6 +34,13 @@
   }
 }
 
+(matrix-well-known) {
+  header /.well-known/matrix/* Content-Type application/json
+  header /.well-known/matrix/* Access-Control-Allow-Origin *
+  respond /.well-known/matrix/server `{"m.server": "matrix.{$DOMAIN}:443"}`
+  respond /.well-known/matrix/client `{"m.homeserver":{"base_url":"https://matrix.{$DOMAIN}"}}`
+}
+
 (auth) {
   forward_auth nas:1000 {
     uri /api/verify?rd=https://auth.{$DOMAIN}
@@ -41,18 +48,18 @@
   }
 }
 
+matrix.{$DOMAIN} {
+  reverse_proxy /_matrix/* nas:8448
+}
+
 *.{$DOMAIN}, {$DOMAIN} {
   import tls
   import globals
+  import matrix-well-known
 
   @www host www.{$DOMAIN}
   handle @www {
     redir https://{$DOMAIN}{uri}
-  }
-
-  @domain host {$DOMAIN}
-  handle @domain {
-    respond "ah ah ah, you didn't say the magic word"
   }
 
   @auth host auth.{$DOMAIN}
@@ -81,16 +88,20 @@
     reverse_proxy nucbox:2283
   }
 
+  @hireme host hireme.{$DOMAIN}
+  handle @hireme {
+    reverse_proxy nas:1313
+  }
+
+  @status host status.{$DOMAIN}
+  handle @status {
+    reverse_proxy nas:8090
+  }
+
+  @cloud host cloud.{$DOMAIN}
+  handle @cloud {
+    reverse_proxy nas:9200
+  }
+
   respond "404: Not Found" 404
-}
-
-(matrix-well-known) {
-  header /.well-known/matrix/* Content-Type application/json
-  header /.well-known/matrix/* Access-Control-Allow-Origin *
-  respond /.well-known/matrix/server `{"m.server": "matrix.{$DOMAIN}:443"}`
-  respond /.well-known/matrix/client `{"m.homeserver":{"base_url":"https://matrix.{$DOMAIN}"}}`
-}
-
-matrix.{$DOMAIN} {
-  reverse_proxy /_matrix/* nas:8008
 }
