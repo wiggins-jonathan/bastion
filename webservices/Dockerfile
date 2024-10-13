@@ -1,5 +1,5 @@
 # Dockerfile to build custom caddy container with dns
-ARG CADDY_VERSION=2.7.5
+ARG CADDY_VERSION=2.8.4
 FROM caddy:${CADDY_VERSION}-builder AS builder
 
 RUN xcaddy build \
