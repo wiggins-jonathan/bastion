@@ -55,11 +55,16 @@ matrix.{$DOMAIN} {
 *.{$DOMAIN}, {$DOMAIN} {
   import tls
   import globals
-  import matrix-well-known
 
   @www host www.{$DOMAIN}
   handle @www {
     redir https://{$DOMAIN}{uri}
+  }
+
+  @domain host {$DOMAIN}
+  handle @domain {
+    import matrix-well-known
+    reverse_proxy nas:1312
   }
 
   @auth host auth.{$DOMAIN}
